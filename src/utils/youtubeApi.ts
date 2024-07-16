@@ -4,18 +4,28 @@ import {parseDuration} from "../utils/parseDuration"
 import {extractTimeParam} from "../utils/excractTimeParams"
 import {extractVideoId} from "../utils/extractVideoId"
 
-const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY // Cambiado para Vite
+const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 const API_URL = "https://www.googleapis.com/youtube/v3/videos"
 
 export const getVideoDuration = async (videoUrl: string) => {
   const videoId = extractVideoId(videoUrl)
   if (!videoId) {
-    return {duration: 0, playedTime: 0, playedPercentage: 0}
+    return {
+      duration: 0,
+      playedTime: 0,
+      playedPercentage: 0,
+      thumbnail: "",
+      title: ""
+    }
   }
 
   try {
     const {data} = await axios.get(API_URL, {
-      params: {part: "contentDetails", id: videoId, key: API_KEY}
+      params: {
+        part: "contentDetails,snippet",
+        id: videoId,
+        key: API_KEY
+      }
     })
 
     if (data.items.length > 0) {
@@ -27,13 +37,21 @@ export const getVideoDuration = async (videoUrl: string) => {
       return {
         duration: totalDuration,
         playedTime: played,
-        playedPercentage: Math.round(percentage * 100) / 100
+        playedPercentage: Math.round(percentage * 100) / 100,
+        thumbnail: data.items[0].snippet.thumbnails.default.url,
+        title: data.items[0].snippet.title
       }
     }
   } catch (error) {
-    console.error("Error al obtener la duración del video:", error)
+    console.error("Error al obtener la información del video:", error)
   }
 
   // Retorna valores por defecto en caso de error
-  return {duration: 0, playedTime: 0, playedPercentage: 0}
+  return {
+    duration: 0,
+    playedTime: 0,
+    playedPercentage: 0,
+    thumbnail: "",
+    title: ""
+  }
 }
